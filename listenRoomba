@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+#	Date: 2014-01-17
+#
+ACTION=$1
+
+#if [ "$ROOMDEV" = "" ]
+#then
+#	ROOMDEV=/dev/ttyUSB0
+#fi
+#
+if [ X"$DATE" = X"" ]
+then
+    DATE=`date +%Y-%m-%d`
+fi
+
+if [ ! -c $ROOMDEV ]
+then
+	echo ROOMDEV=$ROOMDEV does not exist
+	echo looking for alternatives ...GOT:
+	GOT=`ls -1 /dev/ttyU* 2> /dev/null`
+	echo ""
+	echo "		"$GOT
+	echo ""
+	exit
+fi
+case $ACTION in
+	bypass)
+	;;
+    targets|help)
+		echo "	"TARGETS are: bypass, targets, help, run
+        echo ""
+        echo "	"Environment Variables \(reported at runtime, before starting\)
+        echo "	"ROOMDEV=$ROOMDEV
+        echo "	"DATE=$DATE  \(defaults to current date\)
+    ;;
+	run)
+		cat $ROOMDEV
+	;;
+	*)
+		echo NOTHING TO DO!
+	;;
+esac	
+

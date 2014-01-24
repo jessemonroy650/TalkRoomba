@@ -1,0 +1,22 @@
+= Notes on µs =
+
+At 115,200 baud (with 10 bit chars), we get 11520 cps (Characters per Second).
+Time per Character is 0.00008680555 of a second
+A microsecond      is 0.000001 of a second
+==========================================
+Per the iRobot Create Open Interface
+SEE: ROI '''NOTE''' under "Op Code #129"
+It says, 
+"... there must be at least 200µs between (...) each character ..."
+
+SO, at 11520 cps we can send approximately 3 per 200µs.
+
+==========================================
+SEE: http://www.noah.org/wiki/Bandwidth
+
+1000 milliseconds = 1 second
+SEE: https://en.wikipedia.org/wiki/Milliseconds
+SEE: https://en.wikipedia.org/wiki/Microsecond
+
+1000 microseconds = 1 millisecond
+http://www.unitconversion.org/time/microseconds-to-milliseconds-conversion.html
