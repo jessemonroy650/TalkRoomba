@@ -1,0 +1,64 @@
+= Roomba =
+Model # 4400 aka Create
+
+= CAUTION =
+The 'mode' programming makes it very easy to wedge a unit
+with software. If it fails to respond and it did before,
+remove the battery, count 10 - reinsert battery.
+NOTE: Push battery firmly in, often ends up loose.
+
+== Connect to Serial Port Typical ==
+# Reboot laptop (recommended)
+# Start with disconnected cable.
+# Turn off Roomba
+# Connect Cable.
+# cat /dev/ttyUSB0
+# Restart Roomba
+# Responses with (similar) :
+"
+bl-start
+2006-09-12-1137-L   
+bl-start
+2006-09-12-1137-L   
+bl-start
+2006-09-12-1137-L   
+RDK by iRobot!
+MC9S12E128
+2006-11-20-1731-L   
+
+battery-current-quiescent-raw 520  battery-current-zero 506
+"
+
+# When shutdown with power button, turned off and responded with"
+"
+P(random noize)
+"
+
+# Restart Roomba
+NOTE: The Roomba serial cable (#4822) can be powered from the roomba,
+or the USB side (the host computer). Not all cable have the LED
+working consistently.
+
+
+== Charging Note ==
+* When the batteries are charging, the system will NOT respond to commands.
+; Attach serial cable to bot and a (unix) computer.
+: At the command line: 'cat /dev/ttyUSB0'
+: It will response every second with battery charging information.
+: Example:
+: bat:   min 10  sec 0  mV 18758  mA 1191  deg-C 29  
+: bat:   min 10  sec 1  mV 18758  mA 1185  deg-C 29  
+: note: all parameters increment as expected.
+
+== Battery Note ==
+pg 14(labeled)/33(pdf)
+14.4V (Rated) Capacity (3000mAh at ~1100mAh it shutdown)
+Ni-MH (Nickel Metal-Hydride)
+----
+With the Tab connector toward me
+Right is + (positive)
+Left is - (negative
+Not all batteries labeled
+----
+Power supply is:
+22VDC @ 1.25A
