@@ -1,0 +1,9 @@
+= README =
+Date: 2014-01-23tcltk/README
+
+roomba_cmds.tcl - ROI command strings
+roomba_roi.tcl - ROI bit by bit description (incomplete)
+
+talkroomba.tcl - basic procdures for talking to the roomba
+tr.tcl - GUI for issueing commands (incomplete - work in progress)
+
