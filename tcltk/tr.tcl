@@ -8,7 +8,7 @@ exec wish8.4 $0 "$@"
 # Set Program Internal Information
 #============================================#
 set	DEBUG		0
-set	Version		"0.8.5";
+set	Version		"0.9.1";
 set	AppName		"Talk Roomba"
 set	VersionInfo	"$AppName v$Version";
 set	MyName		[ file normalize [ info script ] ]
@@ -39,6 +39,7 @@ source $Lib/cvarload.tcl
 #source $Lib/ctimew.tcl
 
 source roomba_cmds.tcl
+source roomba_decode.tcl
 source talkroomba.tcl
 
 #============================================#
@@ -66,8 +67,9 @@ if { [file exists $HelpFile] } {
 # Drive logic
 #============================================#
 
-set errorState [ catch { [glob -type c /dev/ttyU*] } devState ]
-if { $errorState } {
+if { 0 } {
+set errorState [ catch { [glob -type c "/dev/ttyUSB0" ] } devState ]
+if { $errorState != "" } {
 	puts "\n\tERROR: $devState\n"
 	# 
 	set reply [ tk_messageBox -icon error -title "ERROR"  -message "ERROR: $devState\n\nEXIT?" -type yesno ]
@@ -77,6 +79,7 @@ if { $errorState } {
 	}
 } else {
 	puts "devState=$devState"
+}
 }
 
 #
@@ -121,10 +124,12 @@ set demo_banjo       [ concat $roomba_safe_mode $roomba_demo_banjo ]
 set demo_abort		 [ concat $roomba_safe_mode $roomba_demo_abort ]
 
 set light_leds		 [ concat $roomba_safe_mode $roomba_led ]
-# set get_sensors_electrical [ concat $roomba_safe_mode $roomba_get_sensors_electrical ]
-set get_packet4		 [ concat $roomba_safe_mode $roomba_get_packet4 ]
-
 set get_sensors_all	 [ concat $roomba_safe_mode $roomba_get_sensors_all ]
+set get_packet1      [ concat $roomba_safe_mode $roomba_get_packet1 ]
+set get_packet2      [ concat $roomba_safe_mode $roomba_get_packet2 ]
+set get_sensors_electrical [ concat $roomba_safe_mode $roomba_get_sensors_electrical ]
+set get_packet4      [ concat $roomba_safe_mode $roomba_get_packet4 ]
+set get_packet5      [ concat $roomba_safe_mode $roomba_get_packet5 ]
 
 ###
 set Pachelbel		[ button .pachelbell -text "Pachelbel" -bg PeachPuff  \
@@ -181,57 +186,137 @@ set Drive40	[ button .drive_40 -text "Drive 40 cm" -bg azure3  \
 		do_cmd $roombaPort $script_do
 	} ]
 
-set GetPacket4	[ button .get_sensors -text "get_packet4" -bg azure3  \
+
+set GetSensorsAll	[ button .get_sensors_all -text "Get All Sensors" -bg azure3  \
 						-command {
-		set no_chars 14
+		set no_chars 26
 		set data ""
-		#do_cmd $roombaPort $get_packet4;
-		do_cmd $roombaPort $get_sensors_all
-		set data [ read_data $roombaPort $no_chars $data]
+		set data [ do_rw $roombaPort $get_sensors_all $no_chars  ]
 		set slen [ string length $data ]
-		puts $slen
+		puts "slen $slen"
+		#foreach opcode $data {
+		#	puts d=[format %d $opcode]
+		#}
+	}]
 
+set GetPacket1	[ button .get_packet1 -text "GetPacket1" -bg azure3  \
+						-command {
+		set no_chars 10
+		set data ""
+		set data [ do_rw $roombaPort $get_packet1 $no_chars  ]
+
+		set slen [ string length $data ]
+		puts "== $slen bytes == "
+		#puts $data
 		if { $slen == $no_chars } {
-			binary scan $dat ssssscsc \
-			valWall valCLeft valCFLeft valCFRight valCRight valUDIn valUAIn valCSA
+			binary scan $data cccccccccc \
+				bumpWheelDrops wall cliffLeft cliffFrontLeft \
+				cliffFrontRight cliffRight \
+				virtualWall overCurrents unused01 unused02
 
-			puts "== $slen bytes == "
-			puts [ format %s $valWall]
-			puts [ format %s $valCLeft]
-			puts [ format %i $valCFLeft]
-			puts [ format %i $valCFRight]
-			puts [ format %s $valCRight]
+			puts bumpWheelDrops=$bumpWheelDrops
+			puts wall=$wall
+			puts cliffLeft=$cliffLeft
+			puts cliffFrontLeft=$cliffFrontLeft
+			puts cliffFrontRight=$cliffFrontRight
+			puts cliffRight=$cliffRight
+			puts virtualWall=$virtualWall
+			puts overCurrents=$overCurrents
+			puts unused01=$unused01
+			puts unused02=$unused02
 
-			puts [ format %c $valUDIn]
-			puts [ format %s $valUAIn]
-			puts [ format %c $valCSA]
 		} else {
 			puts "Failed read."
 		}
 	} ]
 
 
-set GetSensorsAll	[ button .get_sensors_all -text "get_sensors_all" -bg azure3  \
+
+set GetSensorsElectrical	[ button .get_sensors -text "GetSensorsElectrical (3)" -bg azure3  \
 						-command {
-		set no_chars 26
+		set no_chars 10
 		set data ""
-		do_cmd $roombaPort $get_sensors_all
-		after 200
-		set data [ read_data $roombaPort $no_chars $data]
+		set data [ do_rw $roombaPort $get_sensors_electrical $no_chars  ]
+
 		set slen [ string length $data ]
-		puts "slen $slen"
-		foreach opcode $data {
-			puts d=[format %d $opcode]
+		puts "== $slen bytes == "
+		#puts $data
+		if { $slen == $no_chars } {
+			binary scan $data csscss chargeState voltage current temperature charge capacity
+			puts chargeState=$chargeState
+			puts voltage=[expr {$voltage / 1000.0} ]mV
+			puts current=[expr {$current / 1000.0} ]mA
+			puts temperature=$temperature
+			puts charge=[expr {$charge & 0xff}]mAh
+			puts capacity=[expr {$capacity & 0xff}]mAh
+		} else {
+			puts "Failed read."
 		}
-	}]
+	} ]
 
 
-# NOT WORKING - 2014-01-17T09:29:10
-#set GetElectricalState	[ button .getElectricalState -text "get_sensors_electrical" -bg azure3  \
-#		-command { 
-#		set data [get_electrical_state $roombaPort $get_sensors_electrical ]
-#		#puts [ format "%d"  [ lindex $data 0 ] ]
-#} ]
+set GetPacket4	[ button .get_packet4 -text "GetPacket4" -bg azure3  \
+						-command {
+		set no_chars 14
+		set data ""
+		set data [ do_rw $roombaPort $get_packet4 $no_chars  ]
+
+		set slen [ string length $data ]
+		puts "== $slen bytes == "
+		#puts $data
+		if { $slen == $no_chars } {
+			binary scan $data ssssscsc \
+				wallSignal cliffLeftSignal cliffFrontLeftSignal \
+				cliffFrontRightSignal cliffRightSignal \
+				userDigitalInput userAnalogInput chargingSourceAvailable
+
+			puts wallSignal=$wallSignal
+			puts cliffLeftSignal=$cliffLeftSignal
+			puts cliffFrontLeftSignal=$cliffFrontLeftSignal
+			puts cliffFrontRightSignal=$cliffFrontRightSignal
+			puts cliffRightSignal=$cliffRightSignal
+			puts userDigitalInput=$userDigitalInput
+			puts userAnalogInput=$userAnalogInput
+			puts chargingSourceAvailable=$chargingSourceAvailable
+
+		} else {
+			puts "Failed read."
+		}
+	} ]
+
+
+set GetPacket5	[ button .get_packet5 -text "GetPacket5" -bg azure3  \
+						-command {
+		set no_chars 12
+		set data ""
+		set data [ do_rw $roombaPort $get_packet5 $no_chars  ]
+
+		set slen [ string length $data ]
+		puts "== $slen bytes == "
+		#puts $data
+		if { $slen == $no_chars } {
+			binary scan $data ccccssss \
+				oiMode songNumber songPlaying \
+				numberOfStreamPackets velocity \
+				radius rightVelocity leftVelocity
+
+			set dummy ""
+			set dummy [roomba_decode_oimode $oiMode $dummy]
+			puts "oiMode=$oiMode $dummy"
+			puts songNumber=$songNumber
+			puts songPlaying=$songPlaying
+			puts numberOfStreamPackets=$numberOfStreamPackets
+			puts velocity=$velocity
+			puts radius=$radius
+			puts rightVelocity=$rightVelocity
+			puts leftVelocity=$leftVelocity
+
+		} else {
+			puts "Failed read."
+		}
+	} ]
+
+
 
 set LightLEDS	[ button .lightLEDS -text "LightLEDS" -bg azure3  \
 						-command { do_cmd $roombaPort $light_leds } ]
@@ -239,7 +324,7 @@ set LightLEDS	[ button .lightLEDS -text "LightLEDS" -bg azure3  \
 #########
 grid $Help -row 0 -column 0 -sticky w
 grid $Label -row 0 -column 1 -sticky w
-grid $About -row 0 -column 3 -sticky e
+grid $About -row 0 -column 4 -sticky e
 
 grid $Pachelbel $Banjo   -row 1  -padx 10 -pady 10
 
@@ -247,13 +332,15 @@ grid $Cover $CoverNDock $SpotCover $WallFollow    -row 2  -padx 10 -pady 10
 
 grid $Eight $Wimp $Home $Tag    -row 3  -padx 10 -pady 10
 
-grid $DriveStraight $DriveInplaceCw $DriveInplaceCcw  $DriveInSquare  -row 4  -padx 10 -pady 10
+grid $DriveStraight $DriveInplaceCw $DriveInplaceCcw  $DriveInSquare  $Drive40  -row 4  -padx 10 -pady 10
 
-#grid $Drive40 $GetElectricalState $LightLEDS  -row 5  -padx 10 -pady 10
+grid $LightLEDS  -row 5  -padx 10 -pady 10
 
-grid $Drive40 $GetPacket4 $GetSensorsAll $LightLEDS  -row 5  -padx 10 -pady 10
+grid $GetSensorsAll -row 6  -padx 10 -pady 10
 
-grid $Exit  -row 7 -column 3 -sticky e
+grid $GetPacket1 $GetSensorsElectrical $GetPacket4 $GetPacket5 -row 7  -padx 10 -pady 10
+
+grid $Exit  -row 8 -column 4 -sticky e
 
 
 bind $Label <1> { exit }

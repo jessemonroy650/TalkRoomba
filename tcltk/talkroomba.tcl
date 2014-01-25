@@ -14,7 +14,8 @@ exec tclsh8.5 $0 "$@"
 #============================================#
 proc playSong { dev song } {
 	set fl [ open $dev "w" ]
-	fconfigure $fl -blocking false -buffering none -translation binary
+	#fconfigure $fl -blocking false -buffering none -translation binary
+	fconfigure $fl -mode 56000,n,8,1  -blocking false -buffering none -translation binary
 
 	puts -nonewline $fl [binary format c 0x80]
 	after 10
@@ -34,7 +35,8 @@ proc playSong { dev song } {
 
 proc do_cmd { dev cmd_list } {
 	set fl [ open $dev "w" ]
-	fconfigure $fl -blocking false -buffering none -translation binary
+	#fconfigure $fl -blocking false -buffering none -translation binary
+	fconfigure $fl -mode 56000,n,8,1  -blocking false -buffering none -translation binary
 
 	foreach opcode $cmd_list {
 		puts -nonewline $fl [binary format c $opcode]
@@ -45,36 +47,27 @@ proc do_cmd { dev cmd_list } {
 	close $fl
 }
 
-proc  roomba_sensors_power_decode { data chargeState } {
+proc do_rw { dev cmd_list no_chars } {
+	set fl [ open $dev RDWR ]
 
-	set chargeState ""
+	fconfigure $fl -mode 57600,n,8,1 -handshake none -blocking false -buffering none -translation binary
+	#puts queue=[ fconfigure $fl -queue ]
+	#puts ttystatus=[ fconfigure $fl -ttystatus ]
 
-	switch $data {
-		0 { set chargeState "Not charging" }
-		1 { set chargeState "Reconditioning charging" }
-		2 { set chargeState "Full charge" }
-		3 { set chargeState "Trickle charge" }
-		4 { set chargeState "Waiting" }
-		5 { set chargeState "Charging Fault" }
-		default { set chargeState "Unknown Error" }
+	foreach opcode $cmd_list {
+		after 200
+		puts -nonewline $fl [binary format c $opcode]
+		# for whatever reason 
 	}
-	return chargeState;
-}
 
+	fconfigure $fl -mode 57600,n,8,1 -handshake none -buffering none -translation binary
 
-##
-# NOT WORKING BELOW HERE - 2014-01-17T09:28:49
-##
-
-proc read_data { dev no_chars dat } {
-	set fl [ open $dev "r" ]
-	fconfigure $fl -blocking false -buffering none -translation binary
+	after 100
 	set dat [ read $fl $no_chars ]
+	#set slen [ string length $dat ]
+	#puts slen=$slen
+
 	close $fl
 
 	return $dat
 }
-
-#playSong "/dev/ttyUSB1" "banjo"
-
-

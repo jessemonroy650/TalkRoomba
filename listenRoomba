@@ -35,7 +35,7 @@ case $ACTION in
         echo "	"DATE=$DATE  \(defaults to current date\)
     ;;
 	run)
-		cat $ROOMDEV
+		cat $ROOMDEV | xspipe &
 	;;
 	*)
 		echo NOTHING TO DO!

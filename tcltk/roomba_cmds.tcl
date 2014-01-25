@@ -74,6 +74,9 @@ set roomba_script_drive_40 [ list 152 13 137 1 44 128 0 156 1 144 137 0 0 0 0 ]
 set roomba_led               [ list 0x8b 10 0 0xff ]
 # 0x8e = 142
 set roomba_get_sensors_all			[ list 0x8e 0x00 ]
+set roomba_get_packet1              [ list 0x8e 0x01 ]
+set roomba_get_packet2              [ list 0x8e 0x02 ]
 set roomba_get_sensors_electrical	[ list 0x8e 0x03 ]
-set roomba_get_packet4				[ list 0x8e 0x04 ]
+set roomba_get_packet4              [ list 0x8e 0x04 ]
+set roomba_get_packet5              [ list 0x8e 0x05 ]
 
